@@ -1,32 +1,33 @@
-//  {
-//    "platform": "Alexa",
-//    "name": "Alexa",
-//    "username": "....",
-//    "password": "...."
-//  }
+
 
 "use strict";
 
-var Accessory, Service, Characteristic, UUIDGen;
-var http = require('http');
 var debug = require('debug')('alexaPlugin');
 
-var alexaLocal = require('./lib/alexaLocal.js').alexaLocal;
+var AlexaLocal = require('./lib/AlexaLocal.js').alexaLocal;
 var alexaHAP = require('./lib/alexaHAP.js');
 var alexaTranslator = require('./lib/alexaTranslator.js');
 
-var mqtt = require('mqtt');
 var alexa;
 var options = {};
 
 module.exports = function(homebridge) {
-  Service = homebridge.hap.Service;
-  Characteristic = homebridge.hap.Characteristic;
-  Accessory = homebridge.platformAccessory;
-  UUIDGen = homebridge.hap.uuid;
-
   homebridge.registerPlatform("homebridge-alexa", "Alexa", alexahome);
 };
+
+/**
+ * Homebridge plugin to allow control via Alexa devices
+ * @param {String} config.username - User name
+ * @param {String} config.password - Password
+ * @example
+ * config.json sample
+ * {
+ *   "platform": "Alexa",
+ *   "name": "Alexa",
+ *   "username": "....",
+ *   "password": "...."
+ * }
+ */
 
 function alexahome(log, config, api) {
   this.log = log;
@@ -36,10 +37,11 @@ function alexahome(log, config, api) {
   this.password = config['password'] || false;
   this.filter = config['filter'];
   this.refresh = config['refresh'] || 60 * 15; // Update every 15 minute's
-  this.speakers = config['speakers'] || {};    // Array of speaker devices
+  this.speakers = config['speakers'] || {}; // Array of speaker devices
 
-  if (!this.username || !this.password)
+  if (!this.username || !this.password) {
     this.log.error("Missing username and password");
+  }
 
   if (api) {
     this.api = api;
@@ -49,30 +51,33 @@ function alexahome(log, config, api) {
 
 alexahome.prototype = {
   accessories: function(callback) {
-
     this.log("accessories");
     callback();
   }
 };
 
-alexahome.prototype.didFinishLaunching = function() {
+/**
+ * Create mqtt connection to website, and mapping between alexa message events and message handler functions
+ * @kind function
+ * @name didFinishLaunching
+ */
 
+alexahome.prototype.didFinishLaunching = function() {
   options = {
     username: this.username,
     password: this.password,
     clientId: this.username,
     reconnectPeriod: 5000,
     servers: [{
-        protocol: 'mqtts',
-        host: 'homebridge.cloudwatch.net',
-        port: 8883
-      },
-      {
-        protocol: 'mqtt',
-        host: 'homebridge.cloudwatch.net',
-        port: 1883
-      }
-    ]
+      protocol: 'mqtts',
+      host: 'homebridge.cloudwatch.net',
+      port: 8883
+    },
+    {
+      protocol: 'mqtt',
+      host: 'homebridge.cloudwatch.net',
+      port: 1883
+    }]
   };
 
   alexaHAP.HAPDiscovery({
@@ -81,8 +86,7 @@ alexahome.prototype.didFinishLaunching = function() {
   });
   //  init(this);
 
-  alexa = new alexaLocal(options);
-
+  alexa = new AlexaLocal(options);
   alexa.on('Alexa', _alexaMessage.bind(this));
   alexa.on('Alexa.Discovery', _alexaDiscovery.bind(this));
   alexa.on('Alexa.PowerController', _alexaPowerController.bind(this));
@@ -91,30 +95,33 @@ alexahome.prototype.didFinishLaunching = function() {
   alexa.on('Alexa.ColorTemperatureController', _alexaColorTemperatureController.bind(this));
   alexa.on('Alexa.PlaybackController', _alexaPlaybackController.bind(this));
   alexa.on('Alexa.Speaker', _alexaSpeaker.bind(this));
-  //alexa.on('Alexa.StepSpeaker', _alexaStepSpeaker.bind(this));
-}
+};
 
 alexahome.prototype.configureAccessory = function(accessory) {
-
   this.log("configureAccessory");
-  callback();
-}
+  // callback();
+};
 
 function _alexaDiscovery(message, callback) {
-
   alexaHAP.HAPs(function(endPoints) {
     var response = alexaTranslator.endPoints(message, endPoints, this.filter, this.speakers);
     if (response.event.payload.endpoints.length < 1) {
       this.log("ERROR: HAP Discovery failed, please review config");
-
     } else {
       this.log("alexaDiscovery - returned %s devices", response.event.payload.endpoints.length);
     }
-    //debug("Discovery Response", JSON.stringify(response, null, 4));
+    // debug("Discovery Response", JSON.stringify(response, null, 4));
     callback(null, response);
-  }.bind(this))
-
+  }.bind(this));
 }
+
+/**
+ * [_alexaColorTemperatureController description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
 
 function _alexaColorTemperatureController(message, callback) {
   var action = message.directive.header.name;
@@ -137,7 +144,7 @@ function _alexaColorTemperatureController(message, callback) {
         this.log("ColorTemperatureController-get", action, haAction.host, haAction.port, status, err);
 
         var colorTemperatureDelta = 40;
-        if ( action.toLowerCase() == "decreasecolortemperature" )
+        if (action.toLowerCase() == "decreasecolortemperature")
           colorTemperatureDelta = -40;
         colorTemperature = status.characteristics[0].value + colorTemperatureDelta > 500 ? 500 : status.characteristics[0].value + colorTemperatureDelta;
         colorTemperature = colorTemperature < 140 ? 140 : colorTemperature;
@@ -150,14 +157,14 @@ function _alexaColorTemperatureController(message, callback) {
         };
         alexaHAP.HAPcontrol(haAction.host, haAction.port, JSON.stringify(body), function(err, status) {
           this.log("ColorTemperatureController-change", action, haAction.host, haAction.port, status, body, err);
-          var response = alexaTranslator.alexaResponse(message, status, err, _round(1000000/colorTemperature));
+          var response = alexaTranslator.alexaResponse(message, status, err, _round(1000000 / colorTemperature));
           callback(err, response);
         }.bind(this));
       }.bind(this));
       break;
     case "setcolortemperature":
       // No need to do anything
-      colorTemperature = _round(1000000/message.directive.payload.colorTemperatureInKelvin);
+      colorTemperature = _round(1000000 / message.directive.payload.colorTemperatureInKelvin);
       var body = {
         "characteristics": [{
           "aid": haAction.aid,
@@ -173,6 +180,14 @@ function _alexaColorTemperatureController(message, callback) {
       break;
   }
 }
+
+/**
+ * [_alexaPlaybackController description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
 
 function _alexaPlaybackController(message, callback) {
   var action = message.directive.header.name;
@@ -198,6 +213,14 @@ function _alexaPlaybackController(message, callback) {
   }.bind(this));
 }
 
+/**
+ * [_alexaPowerController description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
+
 function _alexaPowerController(message, callback) {
   var action = message.directive.header.name;
   var endpointId = message.directive.endpoint.endpointId;
@@ -221,6 +244,14 @@ function _alexaPowerController(message, callback) {
     callback(err, response);
   }.bind(this));
 }
+
+/**
+ * [_alexaColorController description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
 
 function _alexaColorController(message, callback) {
   var action = message.directive.header.name;
@@ -255,6 +286,14 @@ function _alexaColorController(message, callback) {
     callback(err, response);
   }.bind(this));
 }
+
+/**
+ * [_alexaPowerLevelController description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
 
 function _alexaPowerLevelController(message, callback) {
   //debug(JSON.stringify(message, null, 4));
@@ -309,8 +348,15 @@ function _alexaPowerLevelController(message, callback) {
       }.bind(this));
       break;
   }
-
 }
+
+/**
+ * [_alexaSpeaker description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
 
 function _alexaSpeaker(message, callback) {
   //debug(JSON.stringify(message, null, 4));
@@ -365,13 +411,18 @@ function _alexaSpeaker(message, callback) {
       }.bind(this));
       break;
   }
-
 }
 
+/**
+ * [_alexaMessage description]
+ * @param       {[type]}   message  [description]
+ * @param       {Function} callback [description]
+ * @constructor
+ * @return      {[type]}            [description]
+ */
+
 function _alexaMessage(message, callback) {
-
   var now = new Date();
-
   switch (message.directive.header.name.toLowerCase()) {
     case "reportstate": // aka getStatus
       var action = message.directive.header.name;
@@ -402,7 +453,7 @@ function _alexaMessage(message, callback) {
 
       // For performance HAP GET Characteristices supports getting multiple in one call
       alexaHAP.HAPstatus(host, port, body, function(err, status) {
-        //this.log("reportState", action, host, port, status, err);
+        // this.log("reportState", action, host, port, status, err);
         var response = alexaTranslator.alexaStateResponse(message, reportState, status, err);
         callback(err, response);
       }.bind(this));
@@ -424,7 +475,6 @@ function _alexaMessage(message, callback) {
         }
       };
   }
-
 }
 
 function _round(value, precision) {

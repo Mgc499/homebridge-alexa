@@ -4,7 +4,8 @@
   "description": "Alexa Skill frontend for Homebridge",
   "main": "web.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "document": "documentation build web.js -f md --config documentation.yml > API.md"
   },
   "repository": {
     "type": "git",
@@ -17,6 +18,13 @@
   "engines": {
     "node": ">=4.4.5",
     "homebridge": ">=0.4.16"
+  },
+  "devDependencies": {
+    "ava": "0.25.0",
+    "coveralls": "3.0.2",
+    "documentation": "8.1.2",
+    "nyc": "13.1.0",
+    "xo": "0.23.0"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
