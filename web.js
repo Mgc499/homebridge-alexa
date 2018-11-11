@@ -95,8 +95,8 @@ alexahome.prototype.didFinishLaunching = function() {
   alexa.on('Alexa.PlaybackController', _alexaPlaybackController.bind(this));
   alexa.on('Alexa.Speaker', _alexaSpeaker.bind(this));
   alexa.on('Alexa.ThermostatController', _alexaThermostatController.bind(this));
-  //alexa.on('Alexa.StepSpeaker', _alexaStepSpeaker.bind(this));
-}
+  // alexa.on('Alexa.StepSpeaker', _alexaStepSpeaker.bind(this));
+};
 
 alexahome.prototype.configureAccessory = function(accessory) {
   this.log("configureAccessory");
@@ -145,8 +145,9 @@ function _alexaColorTemperatureController(message, callback) {
         this.log("ColorTemperatureController-get", action, haAction.host, haAction.port, status, err);
 
         var colorTemperatureDelta = 40;
-        if (action.toLowerCase() == "decreasecolortemperature")
+        if (action.toLowerCase() === "decreasecolortemperature") {
           colorTemperatureDelta = -40;
+        }
         colorTemperature = status.characteristics[0].value + colorTemperatureDelta > 500 ? 500 : status.characteristics[0].value + colorTemperatureDelta;
         colorTemperature = colorTemperature < 140 ? 140 : colorTemperature;
         var body = {
@@ -313,7 +314,7 @@ function _alexaColorController(message, callback) {
  */
 
 function _alexaPowerLevelController(message, callback) {
-  //debug(JSON.stringify(message, null, 4));
+  // debug(JSON.stringify(message, null, 4));
   var action = message.directive.header.name;
   var endpointId = message.directive.endpoint.endpointId;
   var powerLevel, haAction;
@@ -376,7 +377,7 @@ function _alexaPowerLevelController(message, callback) {
  */
 
 function _alexaSpeaker(message, callback) {
-  //debug(JSON.stringify(message, null, 4));
+  // debug(JSON.stringify(message, null, 4));
   var action = message.directive.header.name;
   var endpointId = message.directive.endpoint.endpointId;
   var volume, haAction;
@@ -457,7 +458,7 @@ function _alexaMessage(message, callback) {
       reportState.forEach(function(element) {
         host = element.host;
         port = element.port;
-        if (element.interface == "Alexa.ColorController") {
+        if (element.interface === "Alexa.ColorController") {
           body = body + spacer + element.hue.aid + "." + element.hue.iid;
           spacer = ",";
           body = body + spacer + element.saturation.aid + "." + element.saturation.iid;
@@ -473,7 +474,7 @@ function _alexaMessage(message, callback) {
         // this.log("reportState", action, host, port, status, err);
         var response = alexaTranslator.alexaStateResponse(message, reportState, status, err);
         callback(err, response);
-      }.bind(this));
+      });
       break;
 
     default:
