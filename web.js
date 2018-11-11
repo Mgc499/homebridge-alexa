@@ -1,5 +1,3 @@
-
-
 "use strict";
 
 var debug = require('debug')('alexaPlugin');
@@ -36,7 +34,7 @@ function alexahome(log, config, api) {
   this.username = config['username'] || false;
   this.password = config['password'] || false;
   this.filter = config['filter'];
-  this.refresh = config['refresh'] || 60 * 15; // Update every 15 minute's
+  this.refresh = config['refresh'] || 60 * 15; // Value in seconds, default every 15 minute's
   this.speakers = config['speakers'] || {}; // Array of speaker devices
 
   if (!this.username || !this.password) {
@@ -69,15 +67,16 @@ alexahome.prototype.didFinishLaunching = function() {
     clientId: this.username,
     reconnectPeriod: 5000,
     servers: [{
-      protocol: 'mqtts',
-      host: 'homebridge.cloudwatch.net',
-      port: 8883
-    },
-    {
-      protocol: 'mqtt',
-      host: 'homebridge.cloudwatch.net',
-      port: 1883
-    }]
+        protocol: 'mqtts',
+        host: 'homebridge.cloudwatch.net',
+        port: 8883
+      },
+      {
+        protocol: 'mqtt',
+        host: 'homebridge.cloudwatch.net',
+        port: 1883
+      }
+    ]
   };
 
   alexaHAP.HAPDiscovery({
@@ -95,7 +94,9 @@ alexahome.prototype.didFinishLaunching = function() {
   alexa.on('Alexa.ColorTemperatureController', _alexaColorTemperatureController.bind(this));
   alexa.on('Alexa.PlaybackController', _alexaPlaybackController.bind(this));
   alexa.on('Alexa.Speaker', _alexaSpeaker.bind(this));
-};
+  alexa.on('Alexa.ThermostatController', _alexaThermostatController.bind(this));
+  //alexa.on('Alexa.StepSpeaker', _alexaStepSpeaker.bind(this));
+}
 
 alexahome.prototype.configureAccessory = function(accessory) {
   this.log("configureAccessory");
@@ -245,13 +246,29 @@ function _alexaPowerController(message, callback) {
   }.bind(this));
 }
 
-/**
- * [_alexaColorController description]
- * @param       {[type]}   message  [description]
- * @param       {Function} callback [description]
- * @constructor
- * @return      {[type]}            [description]
- */
+function _alexaThermostatController(message, callback) {
+  var action = message.directive.header.name;
+  var endpointId = message.directive.endpoint.endpointId;
+  try {
+    var haAction = JSON.parse(message.directive.endpoint.cookie[action]);
+  } catch (e) {
+    this.log.error("_alexaThermostatController missing action", action, e.message, message.directive.endpoint.cookie);
+    callback(e);
+    return;
+  }
+  var body = {
+    "characteristics": [{
+      "aid": haAction.aid,
+      "iid": haAction.iid,
+      "value": message.directive.payload.targetSetpoint.value
+    }]
+  };
+  alexaHAP.HAPcontrol(haAction.host, haAction.port, JSON.stringify(body), function(err, status) {
+    this.log("ThermostatController", action, haAction.host, haAction.port, status, err);
+    var response = alexaTranslator.alexaResponse(message, status, err);
+    callback(err, response);
+  }.bind(this));
+}
 
 function _alexaColorController(message, callback) {
   var action = message.directive.header.name;

@@ -1,4 +1,4 @@
-# homebridge-alexa Version 2 - Home Skill Based
+**homebridge-alexa** Version 2 - Home Skill Based
 
 [![NPM Downloads](https://img.shields.io/npm/dm/homebridge-alexa.svg?style=flat)](https://npmjs.org/package/homebridge-alexa)
 
@@ -6,9 +6,11 @@
 
 Enable Amazon Alexa access to you homebridge controlled devices and accessories.  Full support for all Amazon Alexa devices, including the echo 2nd Generation and software based solutions.  Uses an Amazon smart home skill based approach for integration between HomeBridge and Amazon Alexa.  ( I have stopped using my previous version based on a custom version of HomeBridge, as Amazon is no longer supporting the integration interface I was using on newer Alexa devices, like the Echo 2nd generation. )
 
-Country availability - The plugin is available in these countries, English (AU), German (DE), English (CA), English (US), French (FR), English (UK).  In the near future I will be adding Italian (IT), English (IN),  Spanish (ES), Japanese (JP), Spanish (MX).  If you want early access, contact me thru slack, and I can add yourself to the BETA test.
+Country availability - The plugin is available in these countries, English (AU), German (DE), English (CA), English (US), French (FR), English (UK).  In the near future I will be adding Italian (IT), English (IN), Spanish (ES), Japanese (JP), and Spanish (MX).  ~~If you want early access, contact me thru slack, and I can add yourself to the BETA test.~~
 
 **Nov 2 - I have just submitted the skill for certification in Italian (IT), English (IN),  Spanish (ES), Japanese (JP), and Spanish (MX). This should take 5-7 days, fingers crossed.**
+
+**Nov 9 - I just received an email back from Amazon, and they are saying that they have a large number of skills to review, and need a few more days.  Stay tuned.**
 
 * Supports multiple homebridge instances running on your network.
 * Auto-discovery of multiple Homebridge's
@@ -18,7 +20,34 @@ Country availability - The plugin is available in these countries, English (AU),
 * The plugin does not need to be installed in your 'main' homebridge instance.  It can be installed in any 'Homebridge' instance in your setup
 * Enables control from non-hardware based alexa devices like Invoxia Triby, and AlexaPI.
 
-## New features with Version 2
+# Table of Contents
+<!--ts-->
+   * [Table of Contents](#table-of-contents)
+   * [New features with Version 2](#new-features-with-version-2)
+      * [HomeKit/Homebridge Devices supported](#homekithomebridge-devices-supported)
+      * [Voice commands supported](#voice-commands-supported)
+      * [Color temperature](#color-temperature)
+         * [Color Temperatures](#color-temperatures)
+      * [AppleTV](#appletv)
+      * [Speakers](#speakers)
+      * [Yamaha Receiver/Spotify control](#yamaha-receiverspotify-control)
+      * [Unsupported device types](#unsupported-device-types)
+   * [Installation of homebridge-alexa](#installation-of-homebridge-alexa)
+      * [Upgrading from the previous, non skill based version of homebridge-alexa](#upgrading-from-the-previous-non-skill-based-version-of-homebridge-alexa)
+      * [config.json](#configjson)
+         * [Required parameters](#required-parameters)
+         * [Optional parameters](#optional-parameters)
+   * [Issues, Questions or Problems](#issues-questions-or-problems)
+      * [Known Issues](#known-issues)
+   * [Previous version of homebridge-alexa ( Version 1 )](#previous-version-of-homebridge-alexa--version-1-)
+   * [Roadmap](#roadmap)
+   * [Credits](#credits)
+
+<!-- Added by: sgracey, at:  -->
+
+<!--te-->
+
+# New features with Version 2
 
 * Support for color bulbs
 * Support for Window coverings/blinds ( As Alexa doesn't support window coverings I'm using a light bulb)
@@ -37,7 +66,7 @@ Alexa device names are the same as the homebridge device names.
 
 This only supports accessories connected via a homebridge plugin, any 'Homekit' accessories are not supported, and will never be supported.
 
-# HomeKit/Homebridge Devices supported
+## HomeKit/Homebridge Devices supported
 
 Native Support
 
@@ -47,6 +76,7 @@ Native Support
 * Speakers
 * Apple TV
 * Temperature Sensors
+* Thermostat - Partial support only ( Set target Temperature in celsius )
 
 Emulating a Light bulb
 
@@ -54,7 +84,7 @@ Emulating a Light bulb
 * Garage Door - Supported as light bulb
 * Valves, Sprinklers and Shower Heads - Supported as a light bulb
 
-# Voice commands supported
+## Voice commands supported
 
 * Alexa, discover devices
 * Alexa, turn on  *device*
@@ -300,7 +330,7 @@ Please note, as part of the verbose output from discovery devices, all your devi
 
 9. Installation is now complete, good luck and enjoy.
 
-# Upgrading from the previous, non skill based version of homebridge-alexa
+## Upgrading from the previous, non skill based version of homebridge-alexa
 
 If you had installed the previous version of homebridge-alexa with the special version of homebridge and HAP-NodeJS, it can disabled without reinstalling homebridge.  You can disable it by removing the configuration parameter ssdp from your config.json.  This will disable the previous version.
 
@@ -311,7 +341,7 @@ If you had installed the previous version of homebridge-alexa with the special v
 Also please have Alexa forget all your old devices.
 
 
-# config.json
+## config.json
 
 ```
 "platforms": [
@@ -324,12 +354,12 @@ Also please have Alexa forget all your old devices.
 ],
 ```
 
-## Required parameters
+### Required parameters
 
 * username - Login created for the skill linking website https://homebridge.cloudwatch.net
 * password - Login created for the skill linking website https://homebridge.cloudwatch.net
 
-## Optional parameters
+### Optional parameters
 
 * pin - If you had changed your homebridge pin from the default of "pin": "031-45-154" ie
 
@@ -345,7 +375,7 @@ Also please have Alexa forget all your old devices.
 ],
 ```
 
-* refresh - Frequency of refreshes of the homebridge accessory cache, in minutes.  Defaults to 15 minutes.
+* refresh - Frequency of refreshes of the homebridge accessory cache, in seconds.  Defaults to 15 minutes.
 
 ```
 "platforms": [
@@ -354,7 +384,7 @@ Also please have Alexa forget all your old devices.
     "name": "Alexa",
     "username": "....",
     "password": "....",
-    "refresh": 15
+    "refresh": 900
   }
 ],
 ```
@@ -390,6 +420,7 @@ DEBUG=alexa* homebridge -I
 * All homebridge PIN's in your setup need to be set to the same value.
 * Whitelisting/blacklisting of accessories is not supported, but this can be achieved at the plugin level by putting the plugins you don't want exposed to Alexa in their own instance of HomeBridge, and for that instance of Alexa, don't include -I command line option.  Discovery will fail for that instance, and the accessories will not be exposed.
 * An Alexa device is required. Using just the App or Website does not work, and device discovery will fail to find devices.
+* Thermostats - Partial support only ( Set target Temperature in celsius )
 
 # Previous version of homebridge-alexa ( Version 1 )
 
@@ -405,3 +436,4 @@ See [Roadmap](Roadmap.md)
 * Chrisx9 - German translation
 * Tait Brown - HomeSkill Icon
 * ozno - Recommendation for the bonjour MDNS implementation, and testing on RPI 0 W
+* fazerize - Initial support for Thermostats
