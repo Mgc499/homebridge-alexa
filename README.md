@@ -12,6 +12,10 @@ Country availability - The plugin is available in these countries, English (AU),
 
 **Nov 9 - I just received an email back from Amazon, and they are saying that they have a large number of skills to review, and need a few more days.  Stay tuned.**
 
+**Nov 14 - Received a response from Amazon, and I failed certification due to some text and wording issues.**
+
+**Nov 18 - Resubmitted to Amazon for certification.**
+
 * Supports multiple homebridge instances running on your network.
 * Auto-discovery of multiple Homebridge's
 * Supports devices of homekit Service type Lightbulb, Outlet, Fan, Fan2, Temperature Sensor, Window Coverings and Switch.
@@ -419,7 +423,7 @@ DEBUG=alexa* homebridge -I
 
 * All homebridge PIN's in your setup need to be set to the same value.
 * Whitelisting/blacklisting of accessories is not supported, but this can be achieved at the plugin level by putting the plugins you don't want exposed to Alexa in their own instance of HomeBridge, and for that instance of Alexa, don't include -I command line option.  Discovery will fail for that instance, and the accessories will not be exposed.
-* An Alexa device is required. Using just the App or Website does not work, and device discovery will fail to find devices.
+* An Alexa device or a software based Alexa is required. Using just the App or Website does not work, and device discovery will fail to find devices. The Reverb app is a software based Alexa that is known to work.
 * Thermostats - Partial support only ( Set target Temperature in celsius )
 
 # Previous version of homebridge-alexa ( Version 1 )
